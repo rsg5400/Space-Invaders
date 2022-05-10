@@ -5,6 +5,7 @@
 ## imports
 import pygame
 import sys
+import random
 ## initliazing the pygame
 pygame.init()
 
@@ -32,22 +33,55 @@ class Player():
         ## starting y value
         self.y = y
 
+        self.health = 100
+
+
     def show(self):
         ## shows the player on the screen
         screen.blit(self.img, (self.x, self.y))
-    def update(self, new_x, new_y):
-        self.x = new_x
-        self.y = new_y
+    def move(self, distance):
+        ## updates the position of the spaceship
+        
+        if self.x+distance< 736 and self.x + distance > 0:
+            self.x+=distance
+
+    #
+    # def shoot():
+    #     ## shoots at the enemy
+    #     pass
+    # 
+    # @property
+    # def health():
+    #     return self.health
+    #
 
 
-## class of the enemy
+## enemy infromation
+# enemyIMG = pygame.image.load('/home/sam/Projects/Space-Invaders/images/spaceship.png')
+# enemyX = random.randint(0, 736)
+# enemyy = 100
+#
+# class of the enemy
 class Enemy():
     def __init__(self):
-        pass
+        self.x = random.randint(0, 736) 
+        self.y = 100
+        self.img =pygame.image.load('/home/sam/Projects/Space-Invaders/images/ghost.png')
+        self.health = 50
+    def show(self):
+        screen.blit(self.img, (self.x, self.y))
 
-
+#     def move():
+#         ## moves in a random pattern
+#         pass
+#     
+#     def health():
+#         pass
+#         
+enemies = [Enemy() for i in range(10)]
 player = Player(playerImg, playerX, playerY)
 running = True
+change = 0
 ## Game Loop
 while running:
     ## fills the screen with RGB values
@@ -57,22 +91,30 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        ## runs if a arrow key is pressed
         elif event.type == pygame.KEYDOWN:
 
         
+            ## if right arrow is pressed move right
             if event.key == pygame.K_RIGHT:
-                player.update(player.x+5,player.y)
-
+                # player.update(player.x+5)
+                change = .3
+                #
+            ## if left arrow is pressed moves left
             elif event.key == pygame.K_LEFT:         
-                player.update(player.x-5,player.y)
+                change = -.3
 
-        # elif event.type == pygame.KEYUP:
-        #
-        #         player.update(player.x-5,player.y)
+        ## if not key is pressed spaceship does not move
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
+                change = 0
 
-
+    ## moves the players
+    player.move(change)
+    ## shows the player
     player.show()
-
+    for enemy in enemies:
+        enemy.show()
     ## updates the display
     pygame.display.update()
 
