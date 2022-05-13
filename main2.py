@@ -117,6 +117,7 @@ def main():
     while run:
         clock.tick(FPS)
         screen_update()
+        print(clock)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
