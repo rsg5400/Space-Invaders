@@ -20,7 +20,28 @@ playerImg = pygame.image.load('/home/sam/Projects/Space-Invaders/images/arcade-g
 
 enemyImg = pygame.image.load('/home/sam/Projects/Space-Invaders/images/space-ship.png')
 
+## class for the lasers
+class Laser():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.img = pygame.image.load('/home/sam/Projects/Space-Invaders/images/icons8-vertical-line-48.png')
+        
+
+    def draw(self):
+        screen.blit(self.img, (self.x, self.y))
+        self.move(5)
+
+    def move(self, velo):
+        self.y -= velo
+
+    def hit(self):
+        pass
+
+
+
 ## class of a the main ship
+
 class Ship():
 
     def __init__(self, xPosition, yPosition, health = 100, pixels = 64):
@@ -31,16 +52,27 @@ class Ship():
         ## ship health
         self.health = health
         self.img = None 
+        self.lasers = []
 
 
 
     def draw(self):
         ## draws the ship
         screen.blit(self.img, (self.x, self.y))
-
+        for laser in self.lasers:
+            laser.draw()
 
     def shoot(self):
-        pass
+
+        # laser = Laser(self.x + self.pixels, self.y + self.pixels)
+        laser = Laser(self.x+self.pixels*.15, self.y - .8*self.pixels)
+
+        self.lasers.append(laser)
+
+        
+
+
+
 class Player(Ship):
     def __init__(self, x, y):
         super().__init__(x, y)
@@ -54,6 +86,7 @@ class Enemy(Ship):
         self.x = random.randint(0, width-self.pixels)
         self.y = random.randint(0, 200)
         self.img = enemyImg
+        self.lasers = []
     def move(self,velo):
         self.y += velo
 
@@ -68,12 +101,14 @@ def main():
     # enemy=Enemy()
     enemies = [Enemy() for i in range(6)]
 
-    ship = Player(350,600)
+    player = Player(350,600)
     
     def screen_update():
         screen.fill((0,0,0))
 
-        ship.draw()
+        player.draw()
+
+
         for enemy in enemies:
 
             enemy.draw()
@@ -86,21 +121,28 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-        
         keys = pygame.key.get_pressed()
         ## moves the ship around
 
-        if keys[pygame.K_a] and ship.x>=0:
-            ship.x -= velocity
-        elif keys[pygame.K_d] and ship.x <= width-ship.pixels:
-            ship.x += velocity
+        if keys[pygame.K_a] and player.x>=0:
+            player.x -= velocity
+        elif keys[pygame.K_d] and player.x <= width-player.pixels:
+            player.x += velocity
 
-        elif keys[pygame.K_w] and ship.y >= 0:
-            ship.y -= velocity
+        elif keys[pygame.K_w] and player.y >= 0:
+            player.y -= velocity
 
-        elif keys[pygame.K_s] and ship.y <=height-ship.pixels:
-            ship.y += velocity
+        elif keys[pygame.K_s] and player.y <=height-player.pixels:
+            player.y += velocity
+
+        elif pygame.key.get_pressed()[pygame.K_SPACE]:
+            player.shoot()
+
+
+
         ## moves the enemy
+        
+        
         for enemy in enemies:
 
             enemy.move(enemy_velocity)
