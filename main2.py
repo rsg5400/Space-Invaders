@@ -62,12 +62,15 @@ class Ship():
         for laser in self.lasers:
             laser.draw()
 
-    def shoot(self):
+    def shoot(self, current, shot):
 
-        # laser = Laser(self.x + self.pixels, self.y + self.pixels)
-        laser = Laser(self.x+self.pixels*.15, self.y - .8*self.pixels)
+        if current-shot > 350:
+            laser = Laser(self.x+self.pixels*.15, self.y - .8*self.pixels)
 
-        self.lasers.append(laser)
+            self.lasers.append(laser)
+            return True
+        else:
+            return False
 
         
 
@@ -102,6 +105,8 @@ def main():
     enemies = [Enemy() for i in range(6)]
 
     player = Player(350,600)
+    current_time = 0
+    shoot_time = 0
     
     def screen_update():
         screen.fill((0,0,0))
@@ -117,7 +122,7 @@ def main():
     while run:
         clock.tick(FPS)
         screen_update()
-        print(clock)
+        
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -137,9 +142,13 @@ def main():
             player.y += velocity
 
         elif pygame.key.get_pressed()[pygame.K_SPACE]:
-            player.shoot()
+            if player.shoot(current_time, shoot_time):
+                shoot_time = pygame.time.get_ticks()
 
+            
+        current_time = pygame.time.get_ticks()
 
+        # print("current time {}, button pressed {}", current_time, shoot_time)
 
         ## moves the enemy
         
