@@ -1,6 +1,7 @@
 import pygame
 from sys import exit
 from random import randint 
+import pdb
 
 pygame.init()
 
@@ -41,6 +42,8 @@ class Player(pygame.sprite.Sprite):
         self.last_shot = 0
         
         self.health = 100
+        
+        self.score = 0
 
     def player_input(self):
         keys = pygame.key.get_pressed()
@@ -55,6 +58,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.x += 5
         if keys[pygame.K_SPACE]:
             if self.cooldown(current_time,self.last_shot):
+                print(current_time)
                 self.shoot()
                 self.last_shot = pygame.time.get_ticks()
 
@@ -63,7 +67,6 @@ class Player(pygame.sprite.Sprite):
 
     def shoot(self):
         
-
         player_lasers.add(Laser(REGULAR_LASER, self.rect.midtop, -5))
 
     def collide(self):
@@ -74,6 +77,7 @@ class Player(pygame.sprite.Sprite):
         if collisions(player.sprite,enemy_lasers, True):
             self.health -= 20
 
+        
     def update(self):
         self.player_input()
         self.collide()
@@ -119,7 +123,8 @@ class Enemies(pygame.sprite.Sprite):
 
 
     def collide(self):
-        pygame.sprite.groupcollide(player_lasers, enemies, True, True)
+        if pygame.sprite.groupcollide(player_lasers, enemies, True, True):
+            player.sprite.score += 20
 
 
     def destroy(self):
@@ -140,6 +145,11 @@ class Laser(pygame.sprite.Sprite):
     def update(self):
 
         self.move()
+        self.destroy()
+
+    def destroy(self):
+        if self.rect.top > 1000 or self.rect.bottom < 0:
+            self.kill()
 
 
 def collisions(sprite, group, doKill):
@@ -166,47 +176,76 @@ level = 0
 wavelength = 0
 last_shot = 0
 
+game_active = False 
+
+font = pygame.font.SysFont(None, 40)
+
 # enemies.add(Enemies('special', 500, 500))
 
 while True:
 
-    screen.blit(background, (0,0))
+    if player.sprite.health <= 0: game_active = False
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
 
             pygame.quit()
             exit()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and not game_active:
+            player.sprite.health = 100
+            game_active = True
+            level = 0
+            wavelength = 0
+            
+    if game_active:
+        screen.blit(background, (0,0))
+
+        if len(enemies) == 0:
+            level += 1
+            
+            img = font.render(f'Level: {level}', True, (255, 0, 0))
+            wavelength += 5
+            for i in range(wavelength):
+                if randint(0, 5):
+                    enemies.add(Enemies('regular',randint(0, 1500), randint(-4000, 0)))
+                else:
+                    enemies.add(Enemies('special',randint(0, 1500), randint(-4000, 0)))
+                    
+
+        screen.blit(img, (0, 0))
+            
+
+        current_time = pygame.time.get_ticks()
 
 
-    if len(enemies) == 0:
-        print(level)
-        level += 1
-        wavelength += 5
-        for i in range(wavelength):
-            if randint(0, 5):
-                enemies.add(Enemies('regular',randint(0, 1500), randint(-4000, 0)))
-            else:
-                enemies.add(Enemies('special',randint(0, 1500), randint(-4000, 0)))
-                
+        player.draw(screen)
+
+        player.update()
+
+
+        enemies.draw(screen)
+        enemies.update()
+
+        enemy_lasers.draw(screen)
+        enemy_lasers.update()
+
+        player_lasers.draw(screen)
+        player_lasers.update()
+
+        screen.blit(font.render(f'score: {player.sprite.score}', True, 'blue'), (0, 50))
+
 
         
-    current_time = pygame.time.get_ticks()
-
-
-    player.draw(screen)
-
-    player.update()
-
-
-    enemies.draw(screen)
-    enemies.update()
-
-    enemy_lasers.draw(screen)
-    enemy_lasers.update()
-
-    player_lasers.draw(screen)
-    player_lasers.update()
+    else:
+        screen.fill((0,0,0))
+        if player.sprite.score > 0:
+            enemies.empty()
+            enemy_lasers.empty()
+            player_lasers.empty()
+            screen.blit(font.render(f'score: {player.sprite.score}', True, 'white'), (200, 200))
+        else:
+            screen.fill('blue')
+        screen.blit(font.render("Pres space to play again", True, 'white'), (400, 400))
 
 
 
