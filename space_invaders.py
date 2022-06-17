@@ -23,6 +23,8 @@ SPECIAL_LASER = pygame.Surface((7, 40))
 
 SPECIAL_LASER.fill((173, 216, 230))
 
+healer_object = pygame.image.load('petrol-can.png').convert_alpha()
+
 background = pygame.image.load('background.png').convert()
 
 # laser_timer = pygame.USEREVENT + 1
@@ -49,7 +51,8 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w] and self.rect.top > 0:
-            self.rect.y -= 5
+            if keys[pygame.K_b]: self.rect.y -= 10
+            else: self.rect.y -= 5
         if keys[pygame.K_a] and self.rect.left > 0:
             self.rect.x -= 5
         if keys[pygame.K_s] and self.rect.bottom < 1000:
@@ -58,7 +61,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.x += 5
         if keys[pygame.K_SPACE]:
             if self.cooldown(current_time,self.last_shot):
-                print(current_time)
                 self.shoot()
                 self.last_shot = pygame.time.get_ticks()
 
@@ -77,22 +79,31 @@ class Player(pygame.sprite.Sprite):
         if collisions(player.sprite,enemy_lasers, True):
             self.health -= 20
 
+        if collisions(player.sprite, healer, True):
+            self.health += 20
+
         
     def update(self):
         self.player_input()
         self.collide()
+    def boost(self):
+        t = pygame.time.get_ticks()
+
 
 
 class Enemies(pygame.sprite.Sprite):
+    ## things {model: (ship, laser, score bonus, velo)}
     things = {
-                'special': (SPECIAL_SHIP, SPECIAL_LASER),
-                'regular': (REGULAR_SHIP, REGULAR_LASER)
+                'special': (SPECIAL_SHIP, SPECIAL_LASER, 40, 10),
+                'regular': (REGULAR_SHIP, REGULAR_LASER, 20, 5)
                 }
     def __init__(self, model, x, y):
         super().__init__()
         self.model = model
+        self.score_bonus = self.things[self.model][2]
         self.image = self.things[self.model][0]
         self.rect = self.image.get_rect(center = (x, y))
+        self.velo = self.things[self.model][3]
 
         self.last_shot = 0
         
@@ -119,12 +130,12 @@ class Enemies(pygame.sprite.Sprite):
     def shoot(self):
 
 
-        enemy_lasers.add(Laser(self.things[self.model][1], self.rect.midbottom, 5))
+        enemy_lasers.add(Laser(self.things[self.model][1], self.rect.midbottom, self.velo))
 
 
     def collide(self):
         if pygame.sprite.groupcollide(player_lasers, enemies, True, True):
-            player.sprite.score += 20
+            player.sprite.score += self.score_bonus
 
 
     def destroy(self):
@@ -157,6 +168,37 @@ def collisions(sprite, group, doKill):
         return True
     else: return False
 
+class HealthObject(pygame.sprite.Sprite):
+    def __init__(self, x, y, adder, counter =0):
+        super().__init__()
+        self.image = healer_object
+        self.rect = self.image.get_rect(center = (x, y))
+        self.adder = adder
+        self.counter = counter
+    def move(self):
+        if self.rect.y <= 200: self.rect.y += 5
+        else:
+            if self.rect.y <= self.adder + 200: self.rect.y += 5
+            else:
+
+                if self.counter <= 100:
+                    self.counter +=1
+                else:
+                    self.kill()
+
+
+
+            
+            
+ 
+
+
+    def update(self):
+        self.move()
+
+
+
+
 
 player = pygame.sprite.GroupSingle()
 player.add(Player())
@@ -166,6 +208,8 @@ enemies = pygame.sprite.Group()
 enemy_lasers = pygame.sprite.Group()
 
 player_lasers = pygame.sprite.Group()
+
+healer = pygame.sprite.Group()
 
 
 clock = pygame.time.Clock()
@@ -210,6 +254,13 @@ while True:
                     enemies.add(Enemies('regular',randint(0, 1500), randint(-4000, 0)))
                 else:
                     enemies.add(Enemies('special',randint(0, 1500), randint(-4000, 0)))
+
+                if not randint(0, wavelength):
+
+                    ## the adder is deterimes how far the health object goes down before it stops 
+                    adder = randint(0, 700)
+                    healer.add(HealthObject(randint(0, 1500), randint(-4000, 0), adder))
+
                     
 
         screen.blit(img, (0, 0))
@@ -231,6 +282,9 @@ while True:
 
         player_lasers.draw(screen)
         player_lasers.update()
+
+        healer.draw(screen)
+        healer.update()
 
         screen.blit(font.render(f'score: {player.sprite.score}', True, 'blue'), (0, 50))
 
